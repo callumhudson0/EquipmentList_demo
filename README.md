@@ -1,4 +1,3 @@
-[README-3.md](https://github.com/user-attachments/files/27772533/README-3.md)
 # Bandshop Equipment List Generator
 
 An AI-powered internal tool that generates warehouse pick lists from event enquiry details. Built as a demo for client presentation.
