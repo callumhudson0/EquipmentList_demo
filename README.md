@@ -41,11 +41,8 @@ Just download `equipment-list-demo.html` and open it in any browser. No internet
 11. Your demo is now live at:
 
 ```
-https://yourusername.github.io/bandshop-demo/equipment-list-demo.html
+https://callumhudson0.github.io/EquipmentList_demo/equipment-list-demo.html
 ```
-
-Replace `yourusername` with your GitHub username and `bandshop-demo` with whatever you named the repository.
-
 ### Option 3 — Host on Netlify (even quicker)
 
 1. Go to [netlify.com/drop](https://app.netlify.com/drop)
