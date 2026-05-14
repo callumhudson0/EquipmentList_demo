@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bandshop — Equipment List Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --border: #e2e0d9;
+    --border-strong: #c8c6be;
+    --text: #1a1a18;
+    --muted: #6b6a65;
+    --accent: #1a56db;
+    --accent-bg: #eff5ff;
+    --accent-border: #a4cafe;
+    --success: #057a55;
+    --success-bg: #f3faf7;
+    --success-border: #bcf0da;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .page { max-width: 740px; margin: 0 auto; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+  .brand-icon { width: 38px; height: 38px; background: var(--text); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; }
+  .brand-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 13px; color: var(--muted); margin-left: 2px; }
+
+  .demo-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; margin-left: 10px; vertical-align: middle; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 1rem; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 1.25rem; letter-spacing: -0.02em; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 540px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+  label.field-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px; }
+  select, input[type="number"], textarea {
+    width: 100%; font-family: inherit; font-size: 14px; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 12px; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,0.08); }
+  textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 20px; font-size: 13px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; user-select: none; transition: all 0.12s; color: var(--muted); font-weight: 500; }
+  .pill input[type="checkbox"] { display: none; }
+  .pill.on { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; letter-spacing: -0.01em; width: 100%; margin-top: 4px; }
+  .btn-primary { background: var(--text); color: white; }
+  .btn-primary:hover { background: #2d2d2a; }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .btn-sm { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 12px; font-weight: 600; background: transparent; border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); cursor: pointer; font-family: inherit; transition: background 0.12s; }
+  .btn-sm:hover { background: var(--bg); }
+
+  .output-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 1rem; }
+  .output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; }
+  .output-title { font-size: 15px; font-weight: 700; }
+  .output-meta { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; padding: 10px 12px; background: var(--bg); border-radius: var(--radius); margin-top: 8px; }
+
+  .section { margin-bottom: 1.5rem; }
+  .section:last-of-type { margin-bottom: 0; }
+  .section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 7px; margin-bottom: 10px; }
+  .item { display: flex; align-items: baseline; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--bg); font-size: 14px; line-height: 1.5; }
+  .item:last-child { border-bottom: none; }
+  .qty { font-weight: 700; min-width: 28px; font-size: 13px; color: var(--accent); }
+  .iname { color: var(--text); }
+
+  .notes-box { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; margin-top: 1.25rem; border-left: 3px solid var(--border-strong); }
+  .notes-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .notes-box ul { padding-left: 1rem; }
+  .notes-box li { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+  @media print {
+    body { background: white; padding: 0; font-size: 13px; }
+    .card, .output-card { border: none; padding: 0; margin-bottom: 1rem; box-shadow: none; }
+    .no-print { display: none !important; }
+    .brand { margin-bottom: 0.5rem; }
+    .item { padding: 3px 0; }
+    .section { margin-bottom: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="brand no-print">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm12-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/></svg>
+    </div>
+    <div>
+      <span class="brand-name">Bandshop</span>
+      <span class="brand-sub">Equipment List Generator</span>
+      <span class="demo-badge">Demo</span>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <div class="card-title">Event details</div>
+    <div class="grid-2">
+      <div class="field">
+        <label class="field-label">Event type</label>
+        <select id="eventType">
+          <option>Wedding</option>
+          <option>Corporate event</option>
+          <option>Birthday party</option>
+          <option>Festival / outdoor event</option>
+          <option>Theatre / performance</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Guest count</label>
+        <input type="number" id="guestCount" value="150" min="1" max="2000" />
+      </div>
+      <div class="field">
+        <label class="field-label">Venue type</label>
+        <select id="venueType">
+          <option>Indoor</option>
+          <option>Outdoor</option>
+          <option>Marquee / tent</option>
+          <option>Indoor &amp; outdoor</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Venue size</label>
+        <select id="venueSize">
+          <option>Small (under 100 guests)</option>
+          <option selected>Medium (100–200 guests)</option>
+          <option>Large (200–400 guests)</option>
+          <option>Very large (400+ guests)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Entertainment &amp; requirements</label>
+      <div class="pills" id="entPills">
+        <label class="pill on"><input type="checkbox" value="band" checked> Live band</label>
+        <label class="pill"><input type="checkbox" value="dj"> DJ</label>
+        <label class="pill on"><input type="checkbox" value="speeches" checked> Speeches</label>
+        <label class="pill on"><input type="checkbox" value="dancing" checked> Evening dancing</label>
+        <label class="pill"><input type="checkbox" value="av"> AV screens</label>
+        <label class="pill"><input type="checkbox" value="haze"> Haze / effects</label>
+        <label class="pill"><input type="checkbox" value="loop"> Hearing loop</label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Additional notes</label>
+      <textarea id="notes" placeholder="e.g. 5-piece band, outdoor ceremony then indoor reception, DJ takes over after band at 10pm..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="genBtn" onclick="generate()">
+      Generate equipment list
+    </button>
+  </div>
+
+  <div id="outputArea"></div>
+
+  <div class="footer no-print">Bandshop · Internal equipment list generator · Demo version</div>
+</div>
+
+<script>
+document.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    setTimeout(() => p.classList.toggle('on', p.querySelector('input').checked), 0);
+  });
+});
+
+function getSelections() {
+  const guests = parseInt(document.getElementById('guestCount').value) || 150;
+  const venue = document.getElementById('venueType').value;
+  const size = document.getElementById('venueSize').value;
+  const event = document.getElementById('eventType').value;
+  const notes = document.getElementById('notes').value;
+  const ent = [...document.querySelectorAll('#entPills input:checked')].map(c => c.value);
+  return { guests, venue, size, event, notes, ent };
+}
+
+function scale(guests) {
+  if (guests < 80)  return 'small';
+  if (guests < 200) return 'medium';
+  if (guests < 400) return 'large';
+  return 'xlarge';
+}
+
+function buildList(s) {
+  const { guests, venue, size, event, ent } = s;
+  const sz = scale(guests);
+  const hasBand = ent.includes('band');
+  const hasDJ = ent.includes('dj');
+  const hasSpeeches = ent.includes('speeches');
+  const hasDancing = ent.includes('dancing');
+  const hasAV = ent.includes('av');
+  const hasHaze = ent.includes('haze');
+  const hasLoop = ent.includes('loop');
+  const isOutdoor = venue === 'Outdoor' || venue === 'Marquee / tent';
+  const isBoth = venue === 'Indoor & outdoor';
+
+  const sections = [];
+
+  // FOH Audio
+  const foh = { title: 'Audio – front of house', items: [] };
+  if (sz === 'small') {
+    foh.items.push({ qty: 2, name: 'FBT Ventis 112A Active Loudspeaker' });
+    foh.items.push({ qty: 2, name: 'Speaker Stands' });
+    if (hasBand || hasDancing) foh.items.push({ qty: 2, name: 'FBT Subline 115SA Active Subwoofer' });
+  } else if (sz === 'medium') {
+    foh.items.push({ qty: 2, name: 'FBT Ventis 112A Active Loudspeaker' });
+    foh.items.push({ qty: 2, name: 'FBT Subline 115SA Active Subwoofer' });
+    foh.items.push({ qty: 2, name: 'Speaker Stands' });
+  } else {
+    foh.items.push({ qty: 4, name: 'FBT Ventis 112A Active Loudspeaker' });
+    foh.items.push({ qty: 2, name: 'FBT Subline 115SA Active Subwoofer' });
+    foh.items.push({ qty: 4, name: 'Speaker Stands' });
+  }
+  if (isBoth || isOutdoor) {
+    foh.items.push({ qty: 2, name: 'FBT Ventis 112A Active Loudspeaker (outdoor/ceremony area)' });
+    foh.items.push({ qty: 2, name: 'Speaker Stands' });
+  }
+  const mixerModel = (hasBand || sz === 'large' || sz === 'xlarge') ? 'Soundcraft Signature 22 Mixing Console' : 'Soundcraft Si Expression';
+  foh.items.push({ qty: 1, name: mixerModel });
+  sections.push(foh);
+
+  // Stage monitoring (band only)
+  if (hasBand) {
+    const mon = { title: 'Stage monitoring', items: [] };
+    const monQty = sz === 'small' ? 2 : sz === 'medium' ? 2 : 4;
+    mon.items.push({ qty: monQty, name: 'FBT Ventis 112MA Active Stage Monitor' });
+    sections.push(mon);
+  }
+
+  // Wireless / speech system
+  if (hasSpeeches || hasBand) {
+    const wire = { title: 'Wireless speech system', items: [] };
+    const micQty = (hasSpeeches && hasBand) ? 4 : 2;
+    wire.items.push({ qty: micQty, name: 'Sennheiser SKM100 G4-S Handheld Wireless Microphone' });
+    wire.items.push({ qty: micQty, name: 'Sennheiser EM 100 G4 Wireless Receiver' });
+    wire.items.push({ qty: micQty, name: 'Microphone Stand' });
+    sections.push(wire);
+  }
+
+  // Band microphones
+  if (hasBand) {
+    const bmics = { title: 'Band microphones', items: [] };
+    bmics.items.push({ qty: 4, name: 'Shure SM58 Dynamic Vocal Microphone' });
+    bmics.items.push({ qty: 2, name: 'Shure SM57 Dynamic Instrument Microphone' });
+    bmics.items.push({ qty: 1, name: 'AKG D112 Kick Drum Microphone' });
+    bmics.items.push({ qty: 6, name: 'Microphone Stand' });
+    sections.push(bmics);
+  }
+
+  // DJ equipment
+  if (hasDJ) {
+    const dj = { title: 'DJ equipment', items: [] };
+    dj.items.push({ qty: 2, name: 'Pioneer CDJ-2000 Nexus DJ CD Deck' });
+    dj.items.push({ qty: 1, name: 'Pioneer DJM-900NXS DJ Mixer' });
+    dj.items.push({ qty: 2, name: 'DI Box (Passive)' });
+    sections.push(dj);
+  }
+
+  // DI boxes
+  const di = { title: 'DI boxes', items: [] };
+  if (hasBand) {
+    di.items.push({ qty: 4, name: 'DBX Di1 Active DI Box' });
+    di.items.push({ qty: 2, name: 'DBX DJDI 2-Channel Passive DI Box' });
+  } else if (hasDJ) {
+    di.items.push({ qty: 2, name: 'Cobra Dual Passive DI Box' });
+  }
+  if (di.items.length) sections.push(di);
+
+  // Cabling & power
+  const cable = { title: 'Cabling & power', items: [] };
+  const xlrQty = hasBand ? (sz === 'small' ? 12 : sz === 'medium' ? 16 : 24) : (sz === 'small' ? 6 : 10);
+  cable.items.push({ qty: xlrQty, name: 'XLR Cable (various lengths)' });
+  if (hasBand) cable.items.push({ qty: 1, name: 'XLR Multicore Drum 8-Way 15m' });
+  cable.items.push({ qty: hasBand ? 4 : 2, name: 'IEC / PowerCON Power Cable' });
+  cable.items.push({ qty: hasBand ? 4 : 2, name: 'Extension Lead' });
+  cable.items.push({ qty: 2, name: '4-Way Power Distribution' });
+  if (hasBand) cable.items.push({ qty: hasDJ ? 6 : 4, name: 'Speakon NL2 Speaker Cable' });
+  if (isOutdoor || isBoth) cable.items.push({ qty: 1, name: '32amp SPN K9 Distro (RCD)' });
+  sections.push(cable);
+
+  // Hearing loop
+  if (hasLoop) {
+    sections.push({ title: 'Hearing loop system', items: [
+      { qty: 1, name: 'SigNet PDA5 Hearing Loop Amplifier' },
+      { qty: 2, name: 'SigNet RXTi2 Hearing Loop Listener' }
+    ]});
+  }
+
+  // AV
+  if (hasAV) {
+    sections.push({ title: 'AV & projection', items: [
+      { qty: 1, name: 'Viewsonic PJD5553 Projector' },
+      { qty: 1, name: 'DMT Fastfold Pro 120" Projection Screen' }
+    ]});
+  }
+
+  // Optional extras / haze
+  const extras = { title: 'Optional extras', items: [] };
+  if (hasHaze) extras.items.push({ qty: 1, name: 'ADJ Entourage Haze Machine' });
+  if (isOutdoor && (hasBand || hasDJ)) extras.items.push({ qty: 1, name: 'Chauvet Geyser P7 Vertical Fogger' });
+  if (extras.items.length) sections.push(extras);
+
+  // Warehouse notes
+  const notes = [
+    'Ensure all powered speakers and monitors include matching power cables.',
+    'Check wireless microphone batteries before dispatch.',
+    'Confirm mixer supplied with PSU and flight case.',
+    'Pack spare XLR cables and at least one spare microphone.',
+  ];
+  if (hasBand) notes.push('Include spare microphone stands and cable ties for stage management.');
+  if (isOutdoor || isBoth) notes.push('Weatherproof all connections — use gaffer tape and cable ramps for outdoor runs.');
+  if (hasLoop) notes.push('Test hearing loop system on-site before event start.');
+
+  return { sections, notes };
+}
+
+function getSummary(s) {
+  const { guests, venue, event, ent } = s;
+  const parts = [];
+  if (ent.includes('band')) parts.push('live band');
+  if (ent.includes('dj')) parts.push('DJ');
+  if (ent.includes('speeches')) parts.push('speeches');
+  if (ent.includes('dancing')) parts.push('evening dancing');
+  return `${event} for ${guests} guests · ${venue} venue · ${parts.join(', ')}`;
+}
+
+function generate() {
+  const btn = document.getElementById('genBtn');
+  btn.innerHTML = '<span class="spinner"></span> Building list…';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const s = getSelections();
+    const { sections, notes } = buildList(s);
+    const summary = getSummary(s);
+    window._result = { summary, sections, notes };
+    renderOutput(summary, sections, notes);
+    btn.innerHTML = 'Generate equipment list';
+    btn.disabled = false;
+  }, 900);
+}
+
+function renderOutput(summary, sections, notes) {
+  let html = `<div class="output-card" id="resultCard">
+    <div class="output-header">
+      <div class="output-title">Warehouse pick list</div>
+      <div class="btn-row no-print">
+        <button class="btn-sm" onclick="copyList()">&#10064; Copy</button>
+        <button class="btn-sm" onclick="window.print()">&#128438; Print / PDF</button>
+      </div>
+    </div>
+    <div class="output-meta">${summary}</div>`;
+
+  sections.forEach(sec => {
+    html += `<div class="section"><div class="section-label">${sec.title}</div>`;
+    sec.items.forEach(item => {
+      html += `<div class="item"><span class="qty">${item.qty}&times;</span><span class="iname">${item.name}</span></div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (notes.length) {
+    html += `<div class="notes-box">
+      <div class="notes-title">Warehouse notes</div>
+      <ul>${notes.map(n => `<li>${n}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('outputArea').innerHTML = html;
+}
+
+function copyList() {
+  const r = window._result;
+  if (!r) return;
+  let t = r.summary + '\n\n';
+  r.sections.forEach(s => {
+    t += s.title.toUpperCase() + '\n';
+    s.items.forEach(i => { t += `  ${i.qty}x  ${i.name}\n`; });
+    t += '\n';
+  });
+  if (r.notes.length) { t += 'WAREHOUSE NOTES\n'; r.notes.forEach(n => { t += `• ${n}\n`; }); }
+  navigator.clipboard.writeText(t).then(() => {
+    const btns = document.querySelectorAll('.btn-sm');
+    btns[0].textContent = '✓ Copied!';
+    setTimeout(() => { btns[0].textContent = '⧉ Copy'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
